@@ -27,13 +27,35 @@ if uploaded_file:
 
     pages = data["pages"] 
 
-    # Construire le graphe
+# Construire le graphe
 net = Network(height="600px", width="100%", directed=True)
 
+# Récupérer les IDs
+node_ids = {page["id"] for page in pages}
+
+# Chercher les cibles de tous les choix
+targets = {choice["nextPage"] for page in pages for choice in page.get("choices", [])}
+
+# Le dernier noeud = un noeud qui n'apparaît jamais dans les targets
+end_nodes = node_ids - targets
+
 for page in pages:
-    net.add_node(page["id"], label=page["id"], title=page["text"])
+    color = None
+    if page["id"] == "p1":
+        color = "green"
+    elif page["id"] in end_nodes:
+        color = "red"
+
+    net.add_node(page["id"], label=page["id"], title=page["text"], color=color)
+    
+for page in pages:
     for choice in page.get("choices", []):
-        net.add_edge(page["id"], choice["nextPage"], title=choice["text"], label=choice["text"])
+        target = choice["nextPage"]
+        if target not in node_ids:
+            # Crée un noeud fantôme (gris) pour les pages manquantes
+            net.add_node(target, label=target, color="gray")
+            node_ids.add(target)
+        net.add_edge(page["id"], target, title=choice["text"], label=choice["text"])
 
 # Générer HTML et afficher dans Streamlit
 net.save_graph("graph.html")
