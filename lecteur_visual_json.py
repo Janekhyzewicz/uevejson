@@ -9,10 +9,25 @@ st.title("Editeur de jeux virtuels éducatifs UEVE")
 # Charger le fichier
 uploaded_file = st.file_uploader("Importer un fichier JSON", type="json")
 
-if uploaded_file:
+# Si aucun fichier n’est encore chargé, on affiche un message et on arrête là
+if not uploaded_file:
+    st.info("📂 Importez un fichier JSON pour commencer l’édition.")
+    st.stop()
+
+# Lecture sécurisée du fichier
+try:
     content = uploaded_file.read().decode("utf-8-sig")
     data = json.loads(content)
-    pages = data["pages"]
+except Exception as e:
+    st.error(f"Erreur de lecture du fichier JSON : {e}")
+    st.stop()
+
+# Vérification du format attendu
+if "pages" not in data:
+    st.error("❌ Le fichier JSON ne contient pas de clé 'pages'.")
+    st.stop()
+
+pages = data["pages"]
 
 # Création des deux colonnes: gauche et droite
 col1, col2 = st.columns([1,2])
